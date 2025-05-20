@@ -27,7 +27,12 @@
             <artifactId>service</artifactId>
             <version>1.0.0</version>
         </dependency>
-
+        <!-- in backend/web/pom.xml -->
+        <dependency>
+        <groupId>com.expensetracker</groupId>
+        <artifactId>security</artifactId>
+        <version>1.0.0</version>
+        </dependency>
         <!-- Spring Web for controllers -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -47,11 +52,22 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.expensetracker</groupId>
+            <artifactId>repository</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- ✅ H2 dependency must be inside this block -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.expensetracker</groupId>
+            <artifactId>email</artifactId>
+            <version>1.0.0</version>
         </dependency>  
     </dependencies>
     <build>
