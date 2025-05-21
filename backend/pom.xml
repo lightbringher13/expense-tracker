@@ -1,6 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.expensetracker</groupId>
@@ -18,6 +19,7 @@
     </modules>
 
     <properties>
+        <!-- Java version for source, target, and release -->
         <java.version>17</java.version>
         <spring.boot.version>3.1.12</spring.boot.version>
         <lombok.version>1.18.26</lombok.version>
@@ -25,6 +27,7 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Spring Boot dependency BOM -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -34,5 +37,22 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Ensure Maven uses Java 17 (Text Blocks etc.) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.10.1</version>
+                    <configuration>
+                        <!-- Aligns source, target, and bootclasspath to Java 17 -->
+                        <release>${java.version}</release>
+                    </configuration>
+                </plugin>
+                <!-- You can also manage the Spring Boot plugin here if desired -->
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

@@ -2,7 +2,8 @@ package com.expensetracker.service;
 
 import com.expensetracker.core.model.Expense;
 import java.util.List;
-
+import com.expensetracker.repository.dto.CategoryTotal;
+import com.expensetracker.repository.dto.MonthlyTotal;
 /**
  * Business operations for managing expenses.
  */
@@ -32,4 +33,10 @@ public interface ExpenseService {
      * Delete an expense for a given user.
      */
     void deleteExpense(Long userId, Long expenseId);
+
+    List<CategoryTotal> getCategoryTotals(Long userId);
+
+    List<MonthlyTotal> getMonthlyTotals(Long userId);
+
+
 }

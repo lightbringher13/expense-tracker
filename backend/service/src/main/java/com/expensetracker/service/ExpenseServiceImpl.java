@@ -4,6 +4,9 @@ import com.expensetracker.core.model.Expense;
 import com.expensetracker.core.model.User;
 import com.expensetracker.repository.ExpenseRepository;
 import com.expensetracker.repository.UserRepository;
+import com.expensetracker.repository.dto.CategoryTotal;
+import com.expensetracker.repository.dto.MonthlyTotal;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -52,5 +55,15 @@ public class ExpenseServiceImpl implements ExpenseService {
     public void deleteExpense(Long userId, Long expenseId) {
         Expense existing = getExpenseById(userId, expenseId);
         expenseRepository.delete(existing);
+    }
+
+    @Override
+    public List<CategoryTotal> getCategoryTotals(Long userId) {
+        return expenseRepository.findCategoryTotals(userId);
+    }
+
+    @Override
+    public List<MonthlyTotal> getMonthlyTotals(Long userId) {
+        return expenseRepository.findMonthlyTotals(userId);
     }
 }
