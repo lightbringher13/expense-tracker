@@ -54,6 +54,12 @@ public class User implements UserDetails {
     }
 
     @Override
+    public String getPassword() {
+        // return the hashed password field
+        return this.password;
+    }
+
+    @Override
     public boolean isAccountNonExpired() {
         return true;  // you can add logic here
     }

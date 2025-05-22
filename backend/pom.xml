@@ -22,7 +22,7 @@
         <!-- Java version for source, target, and release -->
         <java.version>17</java.version>
         <spring.boot.version>3.1.12</spring.boot.version>
-        <lombok.version>1.18.26</lombok.version>
+        <lombok.version>1.18.34</lombok.version>
     </properties>
 
     <dependencyManagement>

@@ -3,7 +3,8 @@ import axios from 'axios';
 
 // 2) Create a new instance of axios with defaults
 const axiosClient = axios.create({
-  baseURL: '/api',   // all requests will be relative to /api
+  baseURL: '/api',
+  withCredentials: true   // all requests will be relative to /api
   // you can also add default headers, timeout, etc. here
 });
 

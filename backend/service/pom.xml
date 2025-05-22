@@ -44,10 +44,34 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <!-- Lombok (optional) -->
+        <!-- service/pom.xml -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
+    <build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.10.1</version>
+      <configuration>
+        <!-- use Java 17 as configured in the parent pom -->
+        <release>${java.version}</release>
+
+        <!-- enable Lombok as an annotation processor -->
+        <annotationProcessorPaths>
+          <path>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+          </path>
+        </annotationProcessorPaths>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
 </project>
