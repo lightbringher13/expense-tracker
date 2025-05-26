@@ -2,16 +2,13 @@ package com.expensetracker.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-// NEW imports for CORS
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.*;
 
 import java.util.List;
 
@@ -27,36 +24,44 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // ① Enable CORS support
+            // 1) CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-            // disable CSRF for non-browser clients
+            // 2) Disable CSRF (stateless JWT)
             .csrf(csrf -> csrf.disable())
 
-            // allow H2 console frames
-            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
-
-            // set session to stateless (we’ll use JWT in headers)
+            // 3) Stateless session management
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // configure URL-based authorization
+            // 4) Authorization rules
             .authorizeHttpRequests(auth -> auth
-                // allow only these three without authentication
+                // allow CORS preflight everywhere
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // allow all actuator endpoints
+                .requestMatchers("/actuator/**").permitAll()
+
+                // **explicitly** whitelist each public auth endpoint
+                .requestMatchers(HttpMethod.POST,   "/api/auth/register").permitAll()
+                .requestMatchers(HttpMethod.POST,   "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.GET,    "/api/auth/verify").permitAll()
+
+                // H2 console if used
                 .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers(
-                    "/api/auth/register",
-                    "/api/auth/verify",
-                    "/api/auth/login"
-                ).permitAll()
-                // all other requests require a valid JWT
+
+                // everything else requires a valid JWT
                 .anyRequest().authenticated()
             )
 
-            // insert our JWT filter before Spring’s username/password filter
+            // 5) disable frameOptions for H2
+            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
+
+            // 6) JWT filter
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -64,24 +69,17 @@ public class SecurityConfig {
     }
 
     /**
-     * Defines the CORS policy for /api/** endpoints.
-     * Allows your React app (http://localhost:5173) to call the API.
+     * Apply CORS policy so that your React app on http://localhost:5173 can talk to /api/**
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-
-        // ② Whitelist your Vite dev server origin
+        var config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173"));
-        // ③ Allow the HTTP methods your UI will use
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        // ④ Allow all headers (or restrict if you want)
         config.setAllowedHeaders(List.of("*"));
-        // ⑤ If you ever send cookies or HTTP-only JWTs, enable credentials
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // apply this config to all /api/** endpoints
+        var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);
         return source;
     }

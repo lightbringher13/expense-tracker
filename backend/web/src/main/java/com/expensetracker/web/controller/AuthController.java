@@ -32,6 +32,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegistrationRequest request) {
+        System.out.println(">>> Received register call for email: " + request.getEmail());
         // 1) Create the user (enabled=false, password hashed, etc.)
         User user = User.builder()
                 .email(request.getEmail())

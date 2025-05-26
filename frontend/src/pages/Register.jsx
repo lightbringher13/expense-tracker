@@ -1,111 +1,190 @@
-import React, { useState, useContext, useEffect } from 'react';
-import toast from 'react-hot-toast';             // ① import toast
-import Spinner from '../components/Spinner';     // ② import Spinner
-import { AuthContext } from '../context/AuthContext';
+// src/pages/Register.jsx
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 
 export default function Register() {
-  const { register } = useContext(AuthContext);
+  const { register } = useAuth()
+  const navigate      = useNavigate()
 
-  // Form state
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  // Validation & submission state
-  const [errors, setErrors]     = useState({});
-  const [canSubmit, setCanSubmit] = useState(false);
+  // Controlled inputs
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
 
-  // ① Validate on every change
+  // Validation state
+  const [errors, setErrors] = useState({})
+
+  // Re-validate on change
   useEffect(() => {
-    const errs = {};
+    const errs = {}
     if (!fullName.trim()) {
-      errs.fullName = 'Full name is required.';
+      errs.fullName = 'Full name is required.'
     }
-    // simple email regex
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errs.email = 'Enter a valid email.';
+      errs.email = 'Enter a valid email.'
     }
     if (password.length < 6) {
-      errs.password = 'Password must be ≥ 6 characters.';
+      errs.password = 'Password must be at least 6 characters.'
     }
-    setErrors(errs);
-    // can submit only if no errors
-    setCanSubmit(Object.keys(errs).length === 0);
-  }, [fullName, email, password]);
+    setErrors(errs)
+  }, [fullName, email, password])
 
-  // ② Handle form submission
+  const canSubmit =
+    fullName &&
+    email &&
+    password &&
+    Object.keys(errors).length === 0
+
+  // Submission handler
   const handleSubmit = async e => {
-    e.preventDefault();
-    if (!canSubmit) return;
+    e.preventDefault()
+    if (!canSubmit) return
+
     try {
-      await register({ fullName, email, password });
-      toast.success('Registered! Please log in.');  // ④ success toast
+      await register({ fullName, email, password })
+      toast.success('Registered! Please sign in.')
+      navigate('/login', { replace: true })
     } catch (err) {
-      // backend error could be an email-taken message
-      setErrors({ form: err.response?.data || 'Registration failed.' });
-      toast.error(msg);                             // ⑤ error toast
+      const msg =
+        err.response?.data?.message || 'Registration failed.'
+      setErrors({ form: msg })
+      toast.error(msg)
     }
-  };
+  }
 
   return (
-    <div className="mx-auto mt-6 p-4 sm:p-6 bg-white rounded shadow max-w-full sm:max-w-md md:max w-lg lg:max-w-xl">
-      <h1 className="text-xl sm:text-2xl md:text-3xl mb-4 sm:mb-6">Register</h1>
-      {/* ③ Show form-level error */}
-      {errors.form && <p className="text-red-600 mb-2">{errors.form}</p>}
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      aria-labelledby="register-heading"
+      className="space-y-6"
+    >
+      {/* Page header */}
+      <header>
+        <h2
+          id="register-heading"
+          className="text-2xl font-semibold text-center"
+        >
+          Create Account
+        </h2>
+      </header>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Full Name */}
-        <div>
-          <label className="block mb-1">Full Name</label>
-          <input
-            value={fullName}
-            onChange={e => setFullName(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-          {/* ④ Field-level error */}
-          {errors.fullName && (
-            <p className="text-red-600 text-sm mt-1">{errors.fullName}</p>
-          )}
+      {/* Form-level error */}
+      {errors.form && (
+        <div role="alert" className="text-red-600 text-sm text-center">
+          {errors.form}
         </div>
+      )}
 
-        {/* Email */}
-        <div>
-          <label className="block mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-          {errors.email && (
-            <p className="text-red-600 text-sm mt-1">{errors.email}</p>
-          )}
-        </div>
+      {/* Full Name */}
+      <section>
+        <label
+          htmlFor="fullName"
+          className="block text-sm font-medium mb-1"
+        >
+          Full Name
+        </label>
+        <input
+          id="fullName"
+          type="text"
+          value={fullName}
+          onChange={e => setFullName(e.target.value)}
+          aria-invalid={!!errors.fullName}
+          aria-describedby={
+            errors.fullName ? 'fullName-error' : undefined
+          }
+          required
+          className="w-full p-2 border rounded"
+        />
+        {errors.fullName && (
+          <p
+            id="fullName-error"
+            className="text-red-600 text-xs mt-1"
+          >
+            {errors.fullName}
+          </p>
+        )}
+      </section>
 
-        {/* Password */}
-        <div>
-          <label className="block mb-1">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-          {errors.password && (
-            <p className="text-red-600 text-sm mt-1">{errors.password}</p>
-          )}
-        </div>
+      {/* Email */}
+      <section>
+        <label htmlFor="email" className="block text-sm font-medium mb-1">
+          Email
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          aria-invalid={!!errors.email}
+          aria-describedby={errors.email ? 'email-error' : undefined}
+          required
+          className="w-full p-2 border rounded"
+        />
+        {errors.email && (
+          <p id="email-error" className="text-red-600 text-xs mt-1">
+            {errors.email}
+          </p>
+        )}
+      </section>
 
-        {/* Submit */}
+      {/* Password */}
+      <section>
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium mb-1"
+        >
+          Password
+        </label>
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          aria-invalid={!!errors.password}
+          aria-describedby={
+            errors.password ? 'password-error' : undefined
+          }
+          required
+          className="w-full p-2 border rounded"
+        />
+        {errors.password && (
+          <p
+            id="password-error"
+            className="text-red-600 text-xs mt-1"
+          >
+            {errors.password}
+          </p>
+        )}
+      </section>
+
+      {/* Actions */}
+      <footer className="space-y-4">
         <button
           type="submit"
           disabled={!canSubmit}
           className={`w-full p-2 rounded text-white ${
-            canSubmit ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400 cursor-not-allowed'
+            canSubmit
+              ? 'bg-blue-500 hover:bg-blue-600 focus:ring-2 focus:ring-blue-300'
+              : 'bg-gray-400 cursor-not-allowed'
           }`}
         >
-          Register
+          {canSubmit ? 'Register' : 'Complete all fields'}
         </button>
-      </form>
-    </div>
-  );
+
+        <div className="text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="text-blue-600 hover:underline font-medium"
+          >
+            Sign In
+          </button>
+        </div>
+      </footer>
+    </form>
+  )
 }

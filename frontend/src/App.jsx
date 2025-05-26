@@ -17,7 +17,8 @@ import CategoryForm from './pages/CategoryForm';
 import Reports      from './pages/Reports';
 
 import ProtectedRoute from './components/ProtectedRoute';
-import Layout         from './components/layout';
+import Layout         from './Layouts/Layout';
+import AuthLayout     from './Layouts/AuthLayout'
 
 export default function App() {
   return (
@@ -26,8 +27,10 @@ export default function App() {
       <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* 2) Public routes */}
-      <Route path="/register" element={<Register />} />
-      <Route path="/login"    element={<Login />} />
+      <Route element={<AuthLayout />}>
+        <Route path="/login"    element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
 
       {/* 3) Protected “shell” */}
       <Route
