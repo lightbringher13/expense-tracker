@@ -12,12 +12,11 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
 
     @Override
-    public void sendVerificationEmail(String to, String token) {
-        String link = "http://localhost:8080/api/auth/verify?token=" + token;
+    public void sendCode(String to, String code) {
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setTo(to);
-        msg.setSubject("Please verify your email");
-        msg.setText("Click the link to verify: " + link);
+        msg.setSubject("Your verification code");
+        msg.setText("Your one-time verification code is: " + code);
         mailSender.send(msg);
     }
 }

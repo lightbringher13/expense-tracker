@@ -21,13 +21,18 @@
             <version>1.0.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.expensetracker</groupId>
+            <artifactId>email</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- Use repositories -->
         <dependency>
             <groupId>com.expensetracker</groupId>
             <artifactId>repository</artifactId>
             <version>1.0.0</version>
         </dependency>
-
         <dependency>
             <groupId>com.expensetracker</groupId>
             <artifactId>security</artifactId>

@@ -12,19 +12,13 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class User implements UserDetails {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true, length = 50)
-    private String email;  // Will act as username
+    private String email;
 
     @Column(nullable = false)
     private String password;
@@ -33,49 +27,29 @@ public class User implements UserDetails {
     private String fullName;
 
     @Column(nullable = false)
-    private boolean enabled;
+    private boolean enabled = false;
+
+    @Column(nullable = false)
+    private boolean emailVerified = false;
 
     private LocalDateTime registeredAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role;  // e.g. USER or ADMIN
+    private UserRole role;
 
     // --- UserDetails methods below ---
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
+    @Override public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
-
-    @Override
-    public String getUsername() {
-        return this.email;
-    }
-
-    @Override
-    public String getPassword() {
-        // return the hashed password field
-        return this.password;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;  // you can add logic here
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;  // you can add logic here
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;  // you can add logic here
-    }
-
+    @Override public String getUsername() { return email; }
+    @Override public String getPassword() { return password; }
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
     @Override
     public boolean isEnabled() {
-        return this.enabled;
+        // only fully enabled once both verifications pass
+        return enabled && emailVerified;
     }
 }

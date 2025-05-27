@@ -1,5 +1,8 @@
 package com.expensetracker.email;
 
 public interface EmailService {
-    void sendVerificationEmail(String to, String token);
+    /**
+     * Send a one-time verification code (e.g. 6-digit PIN) to the given address.
+     */
+    void sendCode(String to, String code);
 }

@@ -1,11 +1,10 @@
 package com.expensetracker.web.controller;
 
-import com.expensetracker.core.model.User;
-import com.expensetracker.email.EmailService;
+import com.expensetracker.repository.dto.RegistrationRequest;
 import com.expensetracker.service.AuthService;
-import com.expensetracker.service.UserService;
-import com.expensetracker.service.VerificationTokenService;
-import com.expensetracker.web.dto.RegistrationRequest;
+import com.expensetracker.service.ConfirmationService;
+import com.expensetracker.service.RegistrationService;
+import com.expensetracker.repository.dto.CodeConfirmationRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,16 +12,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.expensetracker.web.dto.LoginRequest;
 import com.expensetracker.web.dto.AuthResponse;
+import lombok.extern.slf4j.Slf4j; 
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j 
 public class AuthController {
 
-    private final UserService userService;
-    private final VerificationTokenService tokenService;
-    private final EmailService emailService;
     private final AuthService authService;
+    private final ConfirmationService confirmationService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
@@ -30,34 +29,34 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(token));
     }
 
+    private final RegistrationService regService;
+
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid @RequestBody RegistrationRequest request) {
-        System.out.println(">>> Received register call for email: " + request.getEmail());
-        // 1) Create the user (enabled=false, password hashed, etc.)
-        User user = User.builder()
-                .email(request.getEmail())
-                .password(request.getPassword())
-                .fullName(request.getFullName())
-                .build();
-        User saved = userService.register(user);
-
-        // 2) Generate a verification token
-        String token = tokenService.createToken(saved);
-
-        // 3) Send the verification email
-        emailService.sendVerificationEmail(saved.getEmail(), token);
-
-        return ResponseEntity.ok("Registration successful! Please check your email to verify.");
+    public ResponseEntity<String> register(
+            @Valid @RequestBody RegistrationRequest req) {
+        regService.registerAndSendCodes(req);
+        return ResponseEntity
+            .status(HttpStatus.ACCEPTED)
+            .body("Registration started—you’ll receive email & SMS PINs shortly.");
     }
 
-    @GetMapping("/verify")
-    public ResponseEntity<String> verify(@RequestParam("token") String token) {
-        boolean valid = tokenService.validateToken(token);
-        if (!valid) {
+    @PostMapping("/confirm-email")
+    public ResponseEntity<String> confirmEmail(
+            @RequestParam Long userId,
+            @RequestParam String code) {
+
+        // wrap into DTO:
+        CodeConfirmationRequest dto = new CodeConfirmationRequest();
+        dto.setUserId(userId);
+        dto.setCode(code);
+
+        boolean ok = confirmationService.confirmEmail(dto);
+        if (!ok) {
             return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("Invalid or expired token.");
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Invalid or expired email code.");
         }
-        return ResponseEntity.ok("Email verified successfully!");
+        return ResponseEntity.ok("Email confirmed.");
     }
+
 }

@@ -1,6 +1,7 @@
 package com.expensetracker.service;
 
 import com.expensetracker.core.model.User;
+import com.expensetracker.core.model.UserRole;
 import com.expensetracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,6 +26,7 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setEnabled(false); // will be set true after email verification
         user.setRegisteredAt(LocalDateTime.now());
+        user.setRole(UserRole.USER);
 
         return userRepository.save(user);
     }
