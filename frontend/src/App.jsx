@@ -2,8 +2,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
-import Register     from './pages/Register';
-import Login        from './pages/Login';
+import MagicLinkPage     from './pages/MagicLinkPage';
+import ConfirmMagicLink        from './pages/ConfirmMagicLink';
 
 import Dashboard    from './pages/Dashboard';
 import ExpenseForm  from './pages/ExpenseForm';
@@ -24,12 +24,12 @@ export default function App() {
   return (
     <Routes>
       {/* 1) Redirect root → login */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<Navigate to="/MagicLinkPage" replace />} />
 
       {/* 2) Public routes */}
       <Route element={<AuthLayout />}>
-        <Route path="/login"    element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/MagicLinkPage"    element={<MagicLinkPage />} />
+        <Route path="/ConfirmMagicLink" element={<ConfirmMagicLink />} />
       </Route>
 
       {/* 3) Protected “shell” */}

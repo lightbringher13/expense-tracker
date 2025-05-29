@@ -52,8 +52,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 2) Validate token and load user
-        if (token != null && jwtProvider.validateToken(token)) {
-            Long userId = jwtProvider.getUserIdFromJwt(token);
+        if (token != null && jwtProvider.validateAccessToken(token)) {
+            Long userId = jwtProvider.getUserIdFromAccessToken(token);
             User user = userRepository.findById(userId).orElse(null);
             if (user != null) {
                 // 3) Build Authentication and set into context

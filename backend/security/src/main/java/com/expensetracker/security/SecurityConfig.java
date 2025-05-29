@@ -41,11 +41,12 @@ public class SecurityConfig {
                 // allow all actuator endpoints
                 .requestMatchers("/actuator/**").permitAll()
 
-                // **explicitly** whitelist each public auth endpoint
-                .requestMatchers(HttpMethod.POST,   "/api/auth/register").permitAll()
-                .requestMatchers(HttpMethod.POST,   "/api/auth/login").permitAll()
-                .requestMatchers(HttpMethod.GET,    "/api/auth/verify").permitAll()
+                .requestMatchers("/error").permitAll()
 
+                // **explicitly** whitelist each public auth endpoint
+                .requestMatchers(HttpMethod.POST,   "/api/auth/magic-link").permitAll()
+                .requestMatchers(HttpMethod.POST,   "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.GET,   "/api/auth/magic-link/confirm").permitAll()
                 // H2 console if used
                 .requestMatchers("/h2-console/**").permitAll()
 

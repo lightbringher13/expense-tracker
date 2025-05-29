@@ -27,6 +27,12 @@ public class User implements UserDetails {
     private String fullName;
 
     @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
+
+    @Column(nullable = false)
     private boolean enabled = false;
 
     @Column(nullable = false)

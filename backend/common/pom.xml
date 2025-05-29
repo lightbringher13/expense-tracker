@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -11,28 +11,24 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>core</artifactId>
+  <groupId>com.expensetracker</groupId>
+  <artifactId>common</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
 
   <properties>
-    <!-- inherited ${lombok.version} and ${java.version} from parent -->
+    <lombok.version>1.18.34</lombok.version>
   </properties>
 
   <dependencies>
-    <!-- JPA Annotations -->
+    <!-- Validation API for @Email, @NotNull -->
     <dependency>
-      <groupId>jakarta.persistence</groupId>
-      <artifactId>jakarta.persistence-api</artifactId>
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
+      <version>3.0.2</version>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.hibernate.orm</groupId>
-      <artifactId>hibernate-core</artifactId>
-      <version>6.2.25.Final</version>  <!-- match your Hibernate version -->
-    </dependency>
-    <!-- Lombok for @Getter, @Setter, @Builder -->
+
+    <!-- Lombok for your DTOs -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -43,13 +39,12 @@
 
   <build>
     <plugins>
-      <!-- ensure we compile to Java 17 and run annotation processors -->
+      <!-- Enable Lombok annotation processing -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.10.1</version>
         <configuration>
-          <release>${java.version}</release>
           <annotationProcessorPaths>
             <path>
               <groupId>org.projectlombok</groupId>

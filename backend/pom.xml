@@ -10,6 +10,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>common</module>
         <module>core</module>
         <module>repository</module>
         <module>service</module>

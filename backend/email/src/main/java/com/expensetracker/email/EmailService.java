@@ -1,8 +1,12 @@
+// src/main/java/com/expensetracker/email/EmailService.java
 package com.expensetracker.email;
 
 public interface EmailService {
     /**
-     * Send a one-time verification code (e.g. 6-digit PIN) to the given address.
+     * Send a magic-link email to the given address.
+     *
+     * @param to   recipient email
+     * @param link magic-link URL
      */
-    void sendCode(String to, String code);
+    void sendMagicLink(String to, String link);
 }

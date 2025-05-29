@@ -20,6 +20,11 @@
             <artifactId>core</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.expensetracker</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0.0</version>
+        </dependency>
 
         <!-- Use service layer -->
         <dependency>
