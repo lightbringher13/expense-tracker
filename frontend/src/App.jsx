@@ -24,12 +24,12 @@ export default function App() {
   return (
     <Routes>
       {/* 1) Redirect root → login */}
-      <Route path="/" element={<Navigate to="/MagicLinkPage" replace />} />
+      <Route path="/" element={<Navigate to="/magic-link" replace />} />
 
       {/* 2) Public routes */}
       <Route element={<AuthLayout />}>
-        <Route path="/MagicLinkPage"    element={<MagicLinkPage />} />
-        <Route path="/ConfirmMagicLink" element={<ConfirmMagicLink />} />
+        <Route path="/magic-link"    element={<MagicLinkPage />} />
+        <Route path="/magic-link/confirm" element={<ConfirmMagicLink />} />
       </Route>
 
       {/* 3) Protected “shell” */}

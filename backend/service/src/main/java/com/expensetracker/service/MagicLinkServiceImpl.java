@@ -61,7 +61,7 @@ public class MagicLinkServiceImpl implements MagicLinkService {
         tokenRepo.save(vt);
 
         // email it
-        String link = baseUrl + "/api/auth/magic-link/confirm?token=" + vt.getToken();
+        String link = baseUrl + "/magic-link/confirm?token=" + vt.getToken();
         emailService.sendMagicLink(req.getEmail(), link);
     }
 

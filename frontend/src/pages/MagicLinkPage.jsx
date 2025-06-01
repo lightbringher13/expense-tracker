@@ -1,32 +1,30 @@
+// src/pages/MagicLinkPage.jsx
 import React, { useState } from 'react';
+import { sendMagicLink } from "../api/auth";
+import toast from 'react-hot-toast';
 
 export default function MagicLinkPage() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState(null);
-  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('loading');
-    setError(null);
     try {
-      const res = await fetch('/api/auth/magic-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await sendMagicLink({ email });
       setStatus('sent');
+      toast.success('Magic link sent! Check your inbox.');
     } catch (err) {
-      setError(err.message);
+      console.error(err);
       setStatus(null);
+      toast.error('Failed to send magic link. Please try again.');
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="max-w-md w-full bg-white shadow rounded-lg p-6">
-        <h1 className="text-2xl font-semibold mb-4">Magic Link Login</h1>
+        <h1 className="text-2xl font-semibold mb-4">Log In with Magic Link</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
             <span className="text-sm font-medium">Email address</span>
@@ -49,9 +47,6 @@ export default function MagicLinkPage() {
         </form>
         {status === 'sent' && (
           <p className="mt-4 text-green-600">Check your email for the login link!</p>
-        )}
-        {error && (
-          <p className="mt-4 text-red-600">Error: {error}</p>
         )}
       </div>
     </div>

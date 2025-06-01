@@ -1,59 +1,90 @@
-import React, {
-  createContext,  // ① to make a new Context object
-  useState,       // ② to hold token in component state
-  useEffect       // ③ to react to state changes (optional profile fetch)
-} from 'react';
-import { useNavigate } from 'react-router-dom';  
-import * as authApi from '../api/auth';        // ④ our auth service functions
-import { useContext } from "react";
+// src/context/AuthContext.jsx
+import React, { createContext, useState, useEffect } from 'react';
+import { logout as logoutApi, refreshAccessToken } from "../api/auth";
+import { useNavigate } from 'react-router-dom';
 
-// ⑤ Define the shape of our context
 export const AuthContext = createContext({
-  token: null,        // current JWT (or null if not logged in)
-  login: () => {},    // function to perform login
-  register: () => {}, // function to perform registration
-  logout: () => {}    // function to clear auth
+  accessToken: null,
+  user: null,
+  isAuthenticated: false,
+  setAccessToken: () => {},
+  logout: () => {},
 });
 
-export function useAuth() {
-  return useContext(AuthContext);
+function parseJwt(token) {
+  try {
+    const payload = token.split('.')[1];
+    const decoded = atob(payload);
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
 }
 
 export function AuthProvider({ children }) {
-  // ⑥ token state, initialized from localStorage so it survives reloads
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
-  const navigate          = useNavigate(); 
+  const navigate = useNavigate();
+  const [accessToken, _setAccessToken] = useState(() => {
+    return localStorage.getItem('accessToken');
+  });
+  const [user, setUser] = useState(() => {
+    if (accessToken) {
+      const claims = parseJwt(accessToken);
+      return claims ? { id: claims.sub, email: claims.email } : null;
+    }
+    return null;
+  });
 
-  // ⑦ Optional: when token changes, you could fetch user profile here
+  // Wrap setting token so that we also store user info and persist to localStorage
+  const setAccessToken = (token) => {
+    if (token) {
+      localStorage.setItem('accessToken', token);
+      const claims = parseJwt(token);
+      setUser(claims ? { id: claims.sub, email: claims.email } : null);
+      _setAccessToken(token);
+    } else {
+      localStorage.removeItem('accessToken');
+      setUser(null);
+      _setAccessToken(null);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await logoutApi();
+    } catch (err) {
+      console.warn('Logout API failed:', err);
+    }
+    setAccessToken(null);
+    navigate('/login', { replace: true });
+  };
+
+  // Optional: if you want to auto‐refresh accessToken on page load
   useEffect(() => {
-    if (!token) return;
-    // e.g. authApi.getProfile().then(...).catch(logout)
-  }, [token]);
+    // If there is no token in memory but maybe a refresh cookie exists, try to get a new accessToken
+    if (!accessToken) {
+      (async () => {
+        try {
+          const newToken = await refreshAccessToken();
+          if (newToken) {
+            setAccessToken(newToken);
+          }
+        } catch {
+          // No valid refresh token / unauthorized; stay logged out
+        }
+      })();
+    }
+  }, [accessToken]);
 
-  // ⑧ login: call API, store token, update state, redirect
-  const login = async ({ email, password }) => {
-    const { data } = await authApi.login({ email, password });
-    localStorage.setItem('token', data.token);
-    setToken(data.token);
-    navigate('/dashboard');
-  };
-
-  // ⑨ register: call API then send user to login page
-  const register = async ({ fullName, email, password }) => {
-    await authApi.register({ fullName, email, password });
-    navigate('/login');
-  };
-
-  // ⑩ logout: clear token and redirect
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    navigate('/login');
-  };
-
-  // ⑪ Expose `token`, and the three functions to all children
   return (
-    <AuthContext.Provider value={{ token, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        accessToken,
+        user,
+        isAuthenticated: Boolean(accessToken),
+        setAccessToken,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

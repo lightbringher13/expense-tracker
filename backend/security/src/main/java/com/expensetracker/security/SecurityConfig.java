@@ -45,7 +45,8 @@ public class SecurityConfig {
 
                 // **explicitly** whitelist each public auth endpoint
                 .requestMatchers(HttpMethod.POST,   "/api/auth/magic-link").permitAll()
-                .requestMatchers(HttpMethod.POST,   "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST,   "/api/auth/logout").permitAll()
+                .requestMatchers(HttpMethod.POST,   "/api/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.GET,   "/api/auth/magic-link/confirm").permitAll()
                 // H2 console if used
                 .requestMatchers("/h2-console/**").permitAll()

@@ -1,49 +1,46 @@
-// src/pages/ConfirmPage.jsx
-import React, { useEffect, useContext, useState } from 'react';
+// src/pages/ConfirmMagicLinkPage.jsx
+import React, { useEffect, useContext } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { confirmMagicLink } from "../api/auth";
 import { AuthContext } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 export default function ConfirmMagicLink() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
   const navigate = useNavigate();
-  const { setAuth } = useContext(AuthContext);
-  const [loading, setLoading] = useState(true);
+  const { setAccessToken } = useContext(AuthContext);
 
   useEffect(() => {
+    
+    const token = searchParams.get('token');
+    console.log("⏳ MagicLinkConfirm running", token);
     if (!token) {
-      toast.error('Missing token in URL');
-      return navigate('/MagicLinkPage');
+      toast.error('No token provided.');
+      navigate('/magic-link', { replace: true });
+      return;
     }
 
-    async function confirm() {
+    (async () => {
       try {
-        const res = await fetch(`/api/auth/magic-link/confirm?token=${token}`);
-        if (!res.ok) throw new Error(`Error ${res.status}`);
-        const { token: jwt } = await res.json();
-        setAuth({ token: jwt });
-        toast.success('Logged in successfully!');
+        // Call backend to confirm magic link
+        const accessJwt = await confirmMagicLink(token);
+        // Store in context (and localStorage by side‐effect)
+        setAccessToken(accessJwt);
+        toast.success('Logged in!');
+        // Redirect to dashboard (or wherever)
         navigate('/dashboard', { replace: true });
       } catch (err) {
-        toast.error('Magic link invalid or expired');
-        navigate('/MagicLinkPage');
-      } finally {
-        setLoading(false);
+        console.error(err);
+        toast.error('Invalid or expired magic link.');
+        navigate('/magic-link', { replace: true });
       }
-    }
-
-    confirm();
-  }, [token, navigate, setAuth]);
+    })();
+  }, [searchParams, navigate, setAccessToken]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="max-w-md w-full bg-white shadow rounded-lg p-6 text-center">
-        {loading ? (
-          <p className="text-lg">Logging you in...</p>
-        ) : (
-          <p className="text-lg">Redirecting...</p>
-        )}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <p className="text-lg">Verifying magic link...</p>
       </div>
     </div>
   );
