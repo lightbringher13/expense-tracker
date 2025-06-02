@@ -11,9 +11,9 @@ export default function ConfirmMagicLink() {
   const { setAccessToken } = useContext(AuthContext);
 
   useEffect(() => {
-    
     const token = searchParams.get('token');
     console.log("⏳ MagicLinkConfirm running", token);
+
     if (!token) {
       toast.error('No token provided.');
       navigate('/magic-link', { replace: true });
@@ -22,16 +22,29 @@ export default function ConfirmMagicLink() {
 
     (async () => {
       try {
-        // Call backend to confirm magic link
         const accessJwt = await confirmMagicLink(token);
-        // Store in context (and localStorage by side‐effect)
         setAccessToken(accessJwt);
         toast.success('Logged in!');
-        // Redirect to dashboard (or wherever)
         navigate('/dashboard', { replace: true });
       } catch (err) {
-        console.error(err);
-        toast.error('Invalid or expired magic link.');
+        console.error("Magic link error:", err);
+
+        // err.message was set to one of:
+        //   "INVALID_TOKEN", "TOKEN_EXPIRED", "TOKEN_ALREADY_CONSUMED", or "UNKNOWN_ERROR"
+        switch (err.message) {
+          case "INVALID_TOKEN":
+            toast.error('That link is invalid.');
+            break;
+          case "TOKEN_EXPIRED":
+            toast.error('This magic link has expired. Please request a new one.');
+            break;
+          case "TOKEN_ALREADY_CONSUMED":
+            toast.error('This link has already been used. Please request a new one.');
+            break;
+          default:
+            toast.error('Something went wrong. Try again.');
+        }
+
         navigate('/magic-link', { replace: true });
       }
     })();

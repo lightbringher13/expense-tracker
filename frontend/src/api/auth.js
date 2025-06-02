@@ -22,16 +22,38 @@ export async function sendMagicLink({ email }) {
  *   └── GET /api/auth/magic-link/confirm?token=...
  *   └── returns { token: accessJwtString } in JSON
  */
+// src/api/auth.js
 export async function confirmMagicLink(token) {
-  const res = await fetch(`/api/auth/magic-link/confirm?token=${token}`, {
-    method: 'GET',
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`confirmMagicLink failed: ${res.status} ${text}`);
+  const resp = await fetch(
+    `/api/auth/magic-link/confirm?token=${encodeURIComponent(token)}`, 
+    {
+      method: "GET",
+      credentials: "include",
+    }
+  );
+
+  if (resp.ok) {
+    // 200 → { accessToken: "..." }
+    const { accessToken } = await resp.json();
+    return accessToken;
   }
-  const { token: accessJwt } = await res.json();
-  return accessJwt;
+
+  // non-2xx: read the JSON body, which looks like:
+  //   { error: "INVALID_TOKEN", message: "Token is invalid or does not exist" }
+  let body;
+  try { body = await resp.json(); }
+  catch (_) { 
+    throw new Error("UNKNOWN_ERROR"); 
+  }
+
+  // Throw an Error whose message is exactly the `error` code from the server.
+  // (You could also include body.message in there, but we only need a short string
+  // to switch on in the React component.)
+  if (body && body.error) {
+    throw new Error(body.error);
+  }
+
+  throw new Error("UNKNOWN_ERROR");
 }
 
 /**

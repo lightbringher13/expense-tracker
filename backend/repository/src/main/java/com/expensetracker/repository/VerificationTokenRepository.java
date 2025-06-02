@@ -19,4 +19,9 @@ public interface VerificationTokenRepository extends JpaRepository<VerificationT
     Optional<VerificationToken> findByTokenAndTypeAndUsedAtIsNullAndExpiresAtAfter(
         UUID token, VerificationToken.Type type, LocalDateTime now
     );
+    
+    // ◀─ NEW: find any token (used or not, expired or not) so we can inspect its fields
+    Optional<VerificationToken> findByTokenAndType(
+        UUID token, VerificationToken.Type type
+    );
 }
