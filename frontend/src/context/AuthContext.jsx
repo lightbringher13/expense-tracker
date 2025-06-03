@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { logout as logoutApi, refreshAccessToken } from "../api/auth";
 import { useNavigate } from 'react-router-dom';
+import { isPublicPath } from "../public/PublicRoutes";
 
 export const AuthContext = createContext({
   accessToken: null,
@@ -58,18 +59,18 @@ export function AuthProvider({ children }) {
     navigate('/login', { replace: true });
   };
 
-  // Optional: if you want to auto‐refresh accessToken on page load
   useEffect(() => {
-    // If there is no token in memory but maybe a refresh cookie exists, try to get a new accessToken
+    // On first render, if we don’t already have an accessToken but the browser
+    // still has a valid refresh‐token cookie, swap it for a fresh accessToken:
     if (!accessToken) {
       (async () => {
         try {
-          const newToken = await refreshAccessToken();
+          const newToken = await refreshAccessToken(); // calls POST /api/auth/refresh
           if (newToken) {
             setAccessToken(newToken);
           }
         } catch {
-          // No valid refresh token / unauthorized; stay logged out
+          // no valid refresh cookie → stay unauthenticated
         }
       })();
     }

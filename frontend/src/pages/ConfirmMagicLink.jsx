@@ -34,18 +34,21 @@ export default function ConfirmMagicLink() {
         switch (err.message) {
           case "INVALID_TOKEN":
             toast.error('That link is invalid.');
+            navigate('/magic-link', { replace: true });
             break;
           case "TOKEN_EXPIRED":
             toast.error('This magic link has expired. Please request a new one.');
+            navigate('/magic-link', { replace: true });
             break;
           case "TOKEN_ALREADY_CONSUMED":
             toast.error('This link has already been used. Please request a new one.');
+            navigate("/dashboard", { replace: true });
             break;
           default:
             toast.error('Something went wrong. Try again.');
+            navigate('/magic-link', { replace: true });
         }
-
-        navigate('/magic-link', { replace: true });
+        
       }
     })();
   }, [searchParams, navigate, setAccessToken]);
