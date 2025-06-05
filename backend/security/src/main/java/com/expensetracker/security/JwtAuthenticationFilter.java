@@ -13,9 +13,21 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-
+import io.jsonwebtoken.JwtException;
+import org.springframework.http.HttpHeaders;
 import java.io.IOException;
 
+
+/**
+ * This filter will:
+ *   1) Skip any requests under /api/auth/**
+ *   2) Otherwise, look for a Bearer token in the "Authorization" header
+ *   3) If present, call jwtProvider.validateAccessToken(token)
+ *      - validateAccessToken(...) should check signature + "exp" internally
+ *   4) If valid, load the User from the database and set
+ *      SecurityContextHolder.getContext().setAuthentication(...)
+ *   5) Whether valid or not, we always call filterChain.doFilter(...) at the end.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -29,7 +41,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Skip JWT validation on public auth endpoints.
+     * Skip JWT validation on any path that starts with /api/auth/
+     * (e.g. login, register, magic-link endpoints).
      */
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -37,39 +50,58 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return path.startsWith("/api/auth/");
     }
 
-    @Override
+   @Override
     protected void doFilterInternal(
         @NonNull HttpServletRequest request,
         @NonNull HttpServletResponse response,
         @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // 1) Extract token from Authorization header
-        String header = request.getHeader("Authorization");
+        // 1) Extract token
+        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        logger.debug("JwtAuthenticationFilter: Authorization header → " + header);
+
         String token = null;
         if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
             token = header.substring(7);
+            logger.debug("JwtAuthenticationFilter: Parsed token → " + token);
+        } else {
+            logger.debug("JwtAuthenticationFilter: No Bearer token in header");
         }
 
-        // 2) Validate token and load user
-        if (token != null && jwtProvider.validateAccessToken(token)) {
-            Long userId = jwtProvider.getUserIdFromAccessToken(token);
-            User user = userRepository.findById(userId).orElse(null);
-            if (user != null) {
-                // 3) Build Authentication and set into context
-                UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(
-                        user, 
-                        null, 
-                        user.getAuthorities()
-                    );
-                auth.setDetails(new WebAuthenticationDetailsSource()
-                                  .buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+        // 2) If we got a token, validate it
+        if (token != null) {
+            try {
+                boolean valid = jwtProvider.validateAccessToken(token);
+                logger.debug("JwtAuthenticationFilter: validateAccessToken? → " + valid);
+                if (valid) {
+                    Long userId = jwtProvider.getUserIdFromAccessToken(token);
+                    logger.debug("JwtAuthenticationFilter: userId from token → " + userId);
+
+                    User user = userRepository.findById(userId).orElse(null);
+                    if (user != null) {
+                        logger.debug("JwtAuthenticationFilter: Found user in DB → " + user.getEmail());
+                        UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                user,
+                                null,
+                                user.getAuthorities()
+                            );
+                        authentication.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                        );
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        logger.debug("JwtAuthenticationFilter: Authentication set in SecurityContext");
+                    } else {
+                        logger.debug("JwtAuthenticationFilter: No user found for id → " + userId);
+                    }
+                }
+            } catch (JwtException ex) {
+                logger.debug("JwtAuthenticationFilter: JWT validation exception → " + ex.getMessage());
             }
         }
 
-        // 4) Continue filter chain
+        // 3) 필터 체인 계속
         filterChain.doFilter(request, response);
     }
 }

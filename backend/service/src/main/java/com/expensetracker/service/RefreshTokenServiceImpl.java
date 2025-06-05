@@ -9,7 +9,10 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -43,14 +46,19 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         if (!jwtProvider.validateRefreshToken(token)) {
             return false;
         }
+
         // load DB record
         RefreshToken rt = repo.findByToken(token)
             .orElseThrow(() -> new IllegalArgumentException("Unknown refresh token"));
+
         // check not expired or already revoked
         if (rt.getRevokedAt() != null || rt.getExpiresAt().isBefore(LocalDateTime.now())) {
             return false;
         }
-        // (optional) rotate token here if desired
+        rt.setRevokedAt(LocalDateTime.now());
+        repo.save(rt);
+
+        // (optional) you could mark it as “revoked” here if you want single‐use
         return true;
     }
 
@@ -64,7 +72,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     @Override
     public String extractFromCookie(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
+        if (request.getCookies() == null) {
+            return null;
+        }
         for (Cookie c : request.getCookies()) {
             if ("refreshToken".equals(c.getName())) {
                 return c.getValue();
@@ -75,11 +85,17 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     @Override
     public void attachCookie(HttpServletResponse response, String token) {
-        Cookie cookie = new Cookie("refreshToken", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge((int)(jwtProvider.getRefreshTokenExpirationMs() / 1000));
-        response.addCookie(cookie);
+        // Build a Set‐Cookie header with HttpOnly, Secure, SameSite=None, etc.
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", token)
+            .httpOnly(true)
+            .secure(true)
+            .sameSite("None")
+            .path("/api/auth/refresh")
+            // Use Duration.ofMillis(...) so that if your JWT TTL is, say, 2592000000 ms (30 days),
+            // you get exactly that full duration rather than truncating to whole seconds.
+            .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationMs()))
+            .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }

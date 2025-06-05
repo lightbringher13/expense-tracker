@@ -1,18 +1,27 @@
 // vite.config.js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+// ← Add these two imports:
+import fs from 'fs';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
   server: {
+    https: {
+      // Make sure these paths match where mkcert dumped your certs
+      key:  fs.readFileSync(path.resolve(__dirname, "certs/localhost-key.pem")),
+      cert: fs.readFileSync(path.resolve(__dirname, "certs/localhost.pem")),
+    },
     port: 5173,
     proxy: {
-      // catch /api/* on 5173 and forward to /* on 8080
+      // forward any /api/* calls to your backend at :8080
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'https://localhost:8443',
         changeOrigin: true,
-        secure: false
+        secure: false, // no need to validate SSL on the backend
       },
     },
   },
-})
+});

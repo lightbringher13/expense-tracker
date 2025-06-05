@@ -1,6 +1,6 @@
-// src/components/NavBar.jsx
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function NavBar() {
   const { logout } = useAuth();
@@ -8,7 +8,7 @@ export default function NavBar() {
 
   function handleLogout() {
     logout();
-    navigate('/login');
+    navigate('/magic-link', { replace: true });
   }
 
   const linkClasses = ({ isActive }) =>

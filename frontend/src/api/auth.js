@@ -1,14 +1,12 @@
-// src/api/auth.js
-
 /**
- * sendMagicLink({ email })
- *   └── POST /api/auth/magic-link
- *   └── returns nothing (204 Accepted)
+ * POST /api/auth/magic-link
+ *   body: { email: "foo@bar.com" }
+ *   returns: 204 No Content
  */
 export async function sendMagicLink({ email }) {
-  const res = await fetch('/api/auth/magic-link', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const res = await fetch("/api/auth/magic-link", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
   if (!res.ok) {
@@ -18,54 +16,51 @@ export async function sendMagicLink({ email }) {
 }
 
 /**
- * confirmMagicLink(token)
- *   └── GET /api/auth/magic-link/confirm?token=...
- *   └── returns { token: accessJwtString } in JSON
+ * GET /api/auth/magic-link/confirm?token=…
+ *   ↳ Backend responds with   { token: "newAccessJwt" }
+ *   and also sets HttpOnly refresh cookie on the response.
+ *
+ *   We do `credentials: "include"` so the browser will accept/set that cookie.
  */
-// src/api/auth.js
 export async function confirmMagicLink(token) {
   const resp = await fetch(
-    `/api/auth/magic-link/confirm?token=${encodeURIComponent(token)}`, 
+    `/api/auth/magic-link/confirm?token=${encodeURIComponent(token)}`,
     {
       method: "GET",
-      credentials: "include",
+      credentials: "include", 
     }
   );
 
   if (resp.ok) {
-    // 200 → { accessToken: "..." }
-    const { accessToken } = await resp.json();
-    return accessToken;
+    // 200 → JSON { token: "someAccessJwt" }
+    const { token: accessJwt } = await resp.json();
+    return accessJwt;
   }
 
-  // non-2xx: read the JSON body, which looks like:
-  //   { error: "INVALID_TOKEN", message: "Token is invalid or does not exist" }
+  // non‐2xx → the body is something like { error: "TOKEN_EXPIRED", message: "..." }
   let body;
-  try { body = await resp.json(); }
-  catch (_) { 
-    throw new Error("UNKNOWN_ERROR"); 
+  try {
+    body = await resp.json();
+  } catch {
+    throw new Error("UNKNOWN_ERROR");
   }
-
-  // Throw an Error whose message is exactly the `error` code from the server.
-  // (You could also include body.message in there, but we only need a short string
-  // to switch on in the React component.)
   if (body && body.error) {
     throw new Error(body.error);
   }
-
   throw new Error("UNKNOWN_ERROR");
 }
 
 /**
- * refreshAccessToken()
- *   └── POST /api/auth/refresh
- *   └── returns { token: newAccessJwt } in JSON
- *   └── rely on HttpOnly "refreshToken" cookie
+ * POST /api/auth/refresh
+ *   ↳ This endpoint *only* relies on the HttpOnly refresh cookie the server set earlier.
+ *   Backend responds with { token: "newAccessJwt" } and also rotates the refresh‐cookie.
+ *
+ *   We do `credentials: "include"` so that the browser sends the cookie along automatically.
  */
 export async function refreshAccessToken() {
-  const res = await fetch('/api/auth/refresh', {
-    method: 'POST',
-    credentials: 'include', // ensure cookies (refreshToken) are sent
+  const res = await fetch("/api/auth/refresh", {
+    method: "POST",
+    credentials: "include",
   });
   if (!res.ok) {
     throw new Error(`refreshAccessToken failed: ${res.status}`);
@@ -75,14 +70,15 @@ export async function refreshAccessToken() {
 }
 
 /**
- * logout()
- *   └── POST /api/auth/logout
- *   └── clears the refresh‐token cookie on server + client
+ * POST /api/auth/logout
+ *   ↳ Server will revoke the current refresh‐token (if any),
+ *     and send back Set‐Cookie: refreshToken=; Max‐Age=0; Path=/;SameSite=None;Secure
+ *   We include credentials so the cookie gets cleared.
  */
 export async function logout() {
-  const res = await fetch('/api/auth/logout', {
-    method: 'POST',
-    credentials: 'include',
+  const res = await fetch("/api/auth/logout", {
+    method: "POST",
+    credentials: "include",
   });
   if (!res.ok) {
     throw new Error(`logout failed: ${res.status}`);
