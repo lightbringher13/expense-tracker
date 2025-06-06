@@ -90,7 +90,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             .httpOnly(true)
             .secure(true)
             .sameSite("None")
-            .path("/api/auth/refresh")
+            .path("/")
             // Use Duration.ofMillis(...) so that if your JWT TTL is, say, 2592000000 ms (30 days),
             // you get exactly that full duration rather than truncating to whole seconds.
             .maxAge(Duration.ofMillis(jwtProvider.getRefreshTokenExpirationMs()))
