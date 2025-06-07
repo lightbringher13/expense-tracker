@@ -14,9 +14,10 @@
         <module>core</module>
         <module>repository</module>
         <module>service</module>
-        <module>web</module>
         <module>security</module>
         <module>email</module>
+        <module>migration</module>
+        <module>web</module>
     </modules>
 
     <properties>

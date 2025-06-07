@@ -34,10 +34,17 @@
         </dependency>
         <!-- in backend/web/pom.xml -->
         <dependency>
-        <groupId>com.expensetracker</groupId>
-        <artifactId>security</artifactId>
-        <version>1.0.0</version>
+            <groupId>com.expensetracker</groupId>
+            <artifactId>security</artifactId>
+            <version>1.0.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.expensetracker</groupId>
+            <artifactId>migration</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- Spring Web for controllers -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -92,18 +99,36 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-maven-plugin</artifactId>
         </plugin>
-    <plugin>
-      <artifactId>maven-compiler-plugin</artifactId>
-      <configuration>
-        <annotationProcessorPaths>
-          <path>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-          </path>
-        </annotationProcessorPaths>
-      </configuration>
-    </plugin>
+        <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <annotationProcessorPaths>
+                <path>
+                    <groupId>org.projectlombok</groupId>
+                    <artifactId>lombok</artifactId>
+                    <version>${lombok.version}</version>
+                </path>
+                </annotationProcessorPaths>
+            </configuration>
+        </plugin>
+        <plugin>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-maven-plugin</artifactId>
+            <version>4.23.2</version>  <!-- match your liquibase-core version -->
+            <configuration>
+                <!-- point at your master changelog -->
+                <changeLogFile>../migration/src/main/resources/db/changelog/db.changelog-master.yml</changeLogFile>
+                <!-- or file:src/main/resources/db/changelog/db.changelog-master.yaml -->
+                <url>jdbc:postgresql://localhost:5432/expense_db</url>
+                <username>expense_user</username>
+                <password>your_local_pg_password</password>
+                <!-- (optional) specify default schema, contexts, etc. -->
+                <!--
+                <defaultSchemaName>public</defaultSchemaName>
+                <contexts>development,production</contexts>
+                -->
+            </configuration>
+        </plugin>
     </plugins>
 </build>
 </project>
