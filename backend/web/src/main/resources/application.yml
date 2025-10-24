@@ -56,7 +56,7 @@ spring:
         "[format_sql]": true
 
   liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    change-log: classpath:db/changelog/db.changelog-master.yml
     contexts: development,production
     drop-first: false
 
@@ -143,7 +143,7 @@ spring:
       ddl-auto: validate
 
   liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    change-log: classpath:db/changelog/db.changelog-master.yml
     contexts: production
 
 server:
