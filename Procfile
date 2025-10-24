@@ -1,0 +1,1 @@
+web: java -jar backend/web/target/web-1.0.0.jar
