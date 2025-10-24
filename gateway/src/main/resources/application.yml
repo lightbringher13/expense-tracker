@@ -33,12 +33,6 @@ spring:
         ssl:
           use-insecure-trust-manager: true
 
-  jwt:
-    access-token-exp-ms: 60000
-    refresh-token-exp-ms: 2592000000
-    access-token-secret: "placeholder-access-secret"
-    refresh-token-secret: "placeholder-refresh-secret"
-
 eureka:
   client:
     enabled: false
