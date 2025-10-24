@@ -39,11 +39,12 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
-  datasource:
-    url: jdbc:postgresql://expense-db:5432/expense_db
-    username: keycloak
-    password: secret
-    driver-class-name: org.postgresql.Driver
+  # Commented out for Heroku deployment - using DATABASE_URL environment variable
+  # datasource:
+  #   url: jdbc:postgresql://expense-db:5432/expense_db
+  #   username: keycloak
+  #   password: secret
+  #   driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -127,3 +128,20 @@ spring:
       on-profile: default
 
 # (Put any true “fallback” defaults here; often left empty in dev setups.)
+
+# ─────────────────────────────────────────
+# 5) “production” PROFILE (only loaded when “production” is active)
+# ─────────────────────────────────────────
+---
+spring:
+  config:
+    activate:
+      on-profile: production
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    contexts: production
