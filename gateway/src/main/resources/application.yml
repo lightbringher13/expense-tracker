@@ -1,0 +1,38 @@
+server:
+  port: 8081
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      
+      routes:
+        - id: users
+          uri: lb://USERS-SERVICE
+          predicates:
+            - Path=/gateway/users/**
+          filters:
+            - RewritePath=/gateway/users/(?<remaining>.*), /${remaining}
+
+        ### NEW HEALTH CHECK ROUTE ###
+        - id: health-check
+          uri: https://backend:8443
+          predicates:
+            - Path=/api/v1/health
+          filters:
+            - RewritePath=/api/v1/health, /actuator/health
+      httpclient:
+        ssl:
+          use-insecure-trust-manager: true
+
+eureka:
+  client:
+    enabled: false

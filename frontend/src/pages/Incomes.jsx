@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams }         from "react-router-dom";
 import toast                               from "react-hot-toast";
-import { fetchIncomeById, createIncome, updateIncome } from "../api/Incomes";
+import { fetchIncomeById, createIncome, updateIncome } from "../api/incomes.js";
 
 export default function IncomeForm() {
   // 1) React Router helpers

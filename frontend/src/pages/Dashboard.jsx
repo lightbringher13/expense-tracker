@@ -1,36 +1,44 @@
-// src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { fetchExpenses, deleteExpense } from '../api/expense';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
-  // 1) Local state to hold our expenses list
   const [expenses, setExpenses] = useState([]);
+  const [health, setHealth] = useState(null); // ### NEW: State for health check
 
-  // 2) Function to load all expenses from backend
+  // ### NEW: Function to call the health endpoint
+  async function checkHealth() {
+    try {
+      const res = await fetch('/api/v1/health');
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+      const data = await res.json();
+      setHealth(`Status: ${data.status}`);
+    } catch (err) {
+      setHealth('Error: ' + err.message);
+    }
+  }
+
   async function loadExpenses() {
     try {
-      const { data } = await fetchExpenses();      // a) GET /api/expenses
-      setExpenses(data);                            // b) store in state
+      const { data } = await fetchExpenses();
+      setExpenses(data);
     } catch (err) {
       console.error(err);
       toast.error('Failed to load expenses');
     }
   }
 
-  // 3) On mount, fetch the data once
   useEffect(() => {
     loadExpenses();
   }, []);
 
-  // 4) Handler to delete an expense and refresh list
   async function handleDelete(id) {
     if (!window.confirm('Delete this expense?')) return;
     try {
-      await deleteExpense(id);                      // a) DELETE /api/expenses/:id
+      await deleteExpense(id);
       toast.success('Deleted expense');
-      loadExpenses();                               // b) reload list
+      loadExpenses();
     } catch (err) {
       console.error(err);
       toast.error('Could not delete');
@@ -39,7 +47,25 @@ export default function Dashboard() {
 
   return (
     <div>
-      {/* 5) Header & “New” button */}
+      {/* ### NEW: Health check button and display ### */}
+      <div className="mb-4 p-4 border rounded bg-gray-50">
+        <h2 className="font-bold mb-2">Connection Test</h2>
+        <p className="text-sm mb-2">
+          Click to verify connection to the backend. You should see "Status: ok".
+        </p>
+        <button
+          onClick={checkHealth}
+          className="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 text-sm"
+        >
+          Check Backend Health
+        </button>
+        {health && (
+          <pre className="mt-2 p-2 bg-gray-100 rounded text-sm">
+            {health}
+          </pre>
+        )}
+      </div>
+
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Expenses</h1>
         <Link
@@ -50,7 +76,6 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* 6) Table of expenses */}
       <table className="w-full bg-white shadow rounded">
         <thead>
           <tr className="text-left border-b">

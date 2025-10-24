@@ -5,7 +5,7 @@ import {
   createIncome,
   fetchIncomeById,
   updateIncome,
-} from '../api/Incomes';
+} from '../api/incomes.js';
 import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 

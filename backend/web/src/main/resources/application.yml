@@ -40,14 +40,14 @@ spring:
           writetimeout: 5000
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/expense_db
-    username: expense_user
-    password: your_local_pg_password
+    url: jdbc:postgresql://expense-db:5432/expense_db
+    username: keycloak
+    password: secret
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: validate    # or “none”
+      ddl-auto: update    # or “none”
     show-sql: true
     properties:
       hibernate:
@@ -61,6 +61,8 @@ spring:
 
 server:
   port: 8443
+  http:
+    port: 8080
   ssl:
     key-store: classpath:certs/localhost-keystore.p12
     key-store-password: changeit

@@ -1,0 +1,158 @@
+services:
+  # ───────────────────────────────────────────────────────────
+  # 1) Traefik: central ingress, TLS termination & routing
+  # ───────────────────────────────────────────────────────────
+  traefik:
+    image: traefik:v2.9
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    command:
+      - "--providers.docker=true"
+      - "--providers.file.filename=/dynamic_conf.yml"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.websecure.address=:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/acme.json:/acme.json
+      - ./traefik/dynamic_conf.yml:/dynamic_conf.yml
+    networks:
+      - backend
+
+  # ───────────────────────────────────────────────────────────
+  # 2) Keycloak DB: Postgres for Keycloak’s realm data
+  # ───────────────────────────────────────────────────────────
+  keycloak-db:
+    image: postgres:15
+    container_name: keycloak-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  # ───────────────────────────────────────────────────────────
+  # 2.1) Expense DB: Postgres for Expense Tracker data
+  # ───────────────────────────────────────────────────────────
+  expense-db:
+    image: postgres:15
+    container_name: expense-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: expense_db
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5433:5432"
+    volumes:
+      - expense-db-data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  # ───────────────────────────────────────────────────────────
+  # 3) Keycloak: your central Identity Provider
+  # ───────────────────────────────────────────────────────────
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2.5
+    container_name: keycloak
+    depends_on:
+      - keycloak-db
+    command:
+      - start
+      - "--https-certificate-file=/etc/x509/https/tls.crt"
+      - "--https-certificate-key-file=/etc/x509/https/tls.key"
+      - "--proxy-headers=xforwarded"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: secret
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: secret
+      KC_HOSTNAME: auth.local
+    volumes:
+      - ./gateway/certs/auth.local.pem:/etc/x509/https/tls.crt:ro
+      - ./gateway/certs/auth.local-key.pem:/etc/x509/https/tls.key:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`auth.local`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls=true"
+      - "traefik.http.routers.keycloak.service=keycloak"
+      - "traefik.http.services.keycloak.loadbalancer.server.scheme=https"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8443"
+      - "traefik.http.services.keycloak.loadbalancer.serverstransport=insecure@file"
+    networks:
+      - backend
+
+  # ───────────────────────────────────────────────────────────
+  # 4) Backend Service: our main Java application
+  # ───────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+    container_name: backend
+    depends_on:
+      - expense-db
+    networks:
+      - backend
+
+  # ───────────────────────────────────────────────────────────
+  # 5) Spring Cloud Gateway: your API gateway
+  # ───────────────────────────────────────────────────────────
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile.curl
+    container_name: gateway
+    depends_on:
+      - backend
+      - keycloak
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gateway-api.rule=Host(`app.local`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.gateway-api.priority=10"
+      - "traefik.http.routers.gateway-api.entrypoints=websecure"
+      - "traefik.http.routers.gateway-api.tls=true"
+      - "traefik.http.services.gateway-api.loadbalancer.server.port=8081"
+    networks:
+      - backend
+
+  # ───────────────────────────────────────────────────────────
+  # 6) Frontend Service: our React application
+  # ───────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`app.local`)"
+      - "traefik.http.routers.frontend.priority=5"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+    networks:
+      - backend
+
+
+volumes:
+  keycloak-db-data:
+  expense-db-data:
+
+networks:
+  backend:
+    driver: bridge
